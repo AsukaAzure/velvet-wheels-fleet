@@ -28,6 +28,7 @@ const carSchema = z.object({
   horsepower: z.number().positive().optional(),
   top_speed: z.number().positive().optional(),
   acceleration: z.string().max(20).optional(),
+  image_url: z.string().url("Invalid image URL").max(2000).optional(),
 });
 
 const segmentImages: Record<string, string> = {
@@ -54,6 +55,7 @@ export default function Admin() {
     horsepower: "",
     top_speed: "",
     acceleration: "",
+    image_url: "",
   });
 
   useEffect(() => {
@@ -107,7 +109,10 @@ export default function Admin() {
 
       const carData = {
         ...data,
-        image_url: segmentImages[data.segment as keyof typeof segmentImages],
+        image_url:
+          data.image_url && data.image_url.trim() !== ""
+            ? data.image_url.trim()
+            : segmentImages[data.segment as keyof typeof segmentImages],
       };
 
       if (editingCar) {
@@ -153,6 +158,7 @@ export default function Admin() {
       horsepower: "",
       top_speed: "",
       acceleration: "",
+      image_url: "",
     });
     setEditingCar(null);
   };
@@ -164,10 +170,11 @@ export default function Admin() {
       brand: car.brand,
       segment: car.segment,
       description: car.description || "",
-      price_per_day: car.price_per_day.toString(),
+      price_per_day: car.price_per_day?.toString() || "",
       horsepower: car.horsepower?.toString() || "",
       top_speed: car.top_speed?.toString() || "",
       acceleration: car.acceleration || "",
+      image_url: car.image_url || "",
     });
     setIsDialogOpen(true);
   };
@@ -183,6 +190,7 @@ export default function Admin() {
       horsepower: formData.horsepower ? parseInt(formData.horsepower) : null,
       top_speed: formData.top_speed ? parseInt(formData.top_speed) : null,
       acceleration: formData.acceleration || null,
+      image_url: formData.image_url?.trim() || null,
     });
   };
 
@@ -262,6 +270,20 @@ export default function Admin() {
                         value={formData.price_per_day}
                         onChange={(e) => setFormData({ ...formData, price_per_day: e.target.value })}
                         required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="imageUrl">Image URL</Label>
+                      <Input
+                        id="imageUrl"
+                        type="url"
+                        placeholder="https://example.com/car.jpg (optional)"
+                        value={formData.image_url}
+                        onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                        className="bg-input border-border"
                       />
                     </div>
                   </div>
