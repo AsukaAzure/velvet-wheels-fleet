@@ -204,13 +204,48 @@ export default function Admin() {
       
       <div className="pt-24 pb-16">
         <div className="container mx-auto px-6">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-5xl font-bold bg-gradient-gold bg-clip-text text-transparent">
+          <div className="mb-8">
+            <h1 className="text-5xl font-bold bg-gradient-royal bg-clip-text text-transparent mb-8">
               Admin Dashboard
             </h1>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle className="text-lg">Total Cars</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-4xl font-bold text-primary">{cars?.length || 0}</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle className="text-lg">Available Cars</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-4xl font-bold text-green-500">
+                    {cars?.filter(car => car.available).length || 0}
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle className="text-lg">Booked Cars</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-4xl font-bold text-orange-500">
+                    {cars?.filter(car => !car.available).length || 0}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="flex justify-between items-center">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={resetForm} className="bg-gradient-gold hover:opacity-90">
+                <Button onClick={resetForm} className="bg-gradient-royal hover:opacity-90">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Car
                 </Button>
@@ -328,7 +363,7 @@ export default function Admin() {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full bg-gradient-gold hover:opacity-90">
+                  <Button type="submit" className="w-full bg-gradient-royal hover:opacity-90">
                     {saveMutation.isPending ? "Saving..." : editingCar ? "Update Car" : "Add Car"}
                   </Button>
                 </form>
@@ -371,9 +406,15 @@ export default function Admin() {
                   <CardContent>
                     <div className="space-y-2 text-sm">
                       <p><span className="text-muted-foreground">Segment:</span> {car.segment}</p>
-                      <p><span className="text-muted-foreground">Price:</span> ${car.price_per_day}/day</p>
+                      <p><span className="text-muted-foreground">Price:</span> ₹{car.price_per_day}/day</p>
                       {car.horsepower && <p><span className="text-muted-foreground">HP:</span> {car.horsepower}</p>}
                       {car.top_speed && <p><span className="text-muted-foreground">Top Speed:</span> {car.top_speed} mph</p>}
+                      <p>
+                        <span className="text-muted-foreground">Status:</span>{" "}
+                        <span className={car.available ? "text-green-500" : "text-orange-500"}>
+                          {car.available ? "Available" : "Booked"}
+                        </span>
+                      </p>
                     </div>
                   </CardContent>
                 </Card>

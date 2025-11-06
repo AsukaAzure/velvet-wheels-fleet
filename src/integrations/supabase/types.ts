@@ -68,7 +68,9 @@ export type Database = {
           created_at: string
           end_date: string
           id: string
+          pickup_location: string | null
           rental_days: number
+          return_time: string | null
           start_date: string
           user_id: string
         }
@@ -77,7 +79,9 @@ export type Database = {
           created_at?: string
           end_date: string
           id?: string
+          pickup_location?: string | null
           rental_days?: number
+          return_time?: string | null
           start_date: string
           user_id: string
         }
@@ -86,7 +90,9 @@ export type Database = {
           created_at?: string
           end_date?: string
           id?: string
+          pickup_location?: string | null
           rental_days?: number
+          return_time?: string | null
           start_date?: string
           user_id?: string
         }
@@ -114,8 +120,10 @@ export type Database = {
           end_date: string
           id: string
           order_id: string
+          pickup_location: string | null
           price_per_day: number
           rental_days: number
+          return_time: string | null
           start_date: string
           subtotal: number
         }
@@ -125,8 +133,10 @@ export type Database = {
           end_date: string
           id?: string
           order_id: string
+          pickup_location?: string | null
           price_per_day: number
           rental_days: number
+          return_time?: string | null
           start_date: string
           subtotal: number
         }
@@ -136,8 +146,10 @@ export type Database = {
           end_date?: string
           id?: string
           order_id?: string
+          pickup_location?: string | null
           price_per_day?: number
           rental_days?: number
+          return_time?: string | null
           start_date?: string
           subtotal?: number
         }

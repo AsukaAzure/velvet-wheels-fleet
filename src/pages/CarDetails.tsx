@@ -1,31 +1,40 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Gauge, Zap, Clock, ShoppingCart } from "lucide-react";
-import { format, differenceInDays } from "date-fns";
+import { Gauge, Zap, Clock } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
-import { cn } from "@/lib/utils";
 
 export default function CarDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
+  const [rentalDays, setRentalDays] = useState(1);
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
+  const [pickupLocation, setPickupLocation] = useState("");
+  const [returnTime, setReturnTime] = useState("10:00");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
   }, []);
+
+  useEffect(() => {
+    if (startDate && endDate) {
+      const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      setRentalDays(days > 0 ? days : 1);
+    }
+  }, [startDate, endDate]);
 
   const { data: car, isLoading } = useQuery({
     queryKey: ["car", id],
@@ -40,41 +49,41 @@ export default function CarDetails() {
     },
   });
 
-  const handleAddToCart = async () => {
-    if (!user) {
-      toast.error("Please sign in to add items to cart");
-      navigate("/auth");
-      return;
-    }
+  const addToCart = useMutation({
+    mutationFn: async () => {
+      if (!user) {
+        navigate("/auth");
+        return;
+      }
 
-    if (!startDate || !endDate) {
-      toast.error("Please select rental dates");
-      return;
-    }
+      if (!startDate || !endDate) {
+        throw new Error("Please select rental dates");
+      }
 
-    if (startDate >= endDate) {
-      toast.error("End date must be after start date");
-      return;
-    }
+      if (!pickupLocation.trim()) {
+        throw new Error("Please enter pickup location");
+      }
 
-    const rentalDays = differenceInDays(endDate, startDate);
+      const { error } = await supabase.from("cart_items").insert({
+        user_id: user.id,
+        car_id: id,
+        rental_days: rentalDays,
+        start_date: startDate.toISOString().split('T')[0],
+        end_date: endDate.toISOString().split('T')[0],
+        pickup_location: pickupLocation,
+        return_time: returnTime,
+      });
 
-    const { error } = await supabase.from("cart_items").upsert({
-      user_id: user.id,
-      car_id: id!,
-      rental_days: rentalDays,
-      start_date: format(startDate, "yyyy-MM-dd"),
-      end_date: format(endDate, "yyyy-MM-dd"),
-    });
-
-    if (error) {
-      toast.error("Failed to add to cart");
-      return;
-    }
-
-    toast.success("Added to cart!");
-    navigate("/cart");
-  };
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Added to cart!");
+      navigate("/cart");
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
 
   if (isLoading) {
     return (
@@ -87,19 +96,7 @@ export default function CarDetails() {
     );
   }
 
-  if (!car) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="pt-24 text-center">
-          <h1 className="text-2xl">Car not found</h1>
-        </div>
-      </div>
-    );
-  }
-
-  const rentalDays = startDate && endDate ? differenceInDays(endDate, startDate) : 0;
-  const totalPrice = rentalDays * Number(car.price_per_day);
+  if (!car) return null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -108,29 +105,27 @@ export default function CarDetails() {
       <div className="pt-24 pb-16">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <div className="animate-fade-in">
-              {car.image_url && (
-                <img 
-                  src={car.image_url} 
-                  alt={car.name}
-                  className="w-full h-[500px] object-cover rounded-lg shadow-luxury"
-                />
-              )}
+            <div>
+              <img 
+                src={car.image_url} 
+                alt={car.name}
+                className="w-full h-[500px] object-cover rounded-lg shadow-luxury"
+              />
             </div>
 
-            <div className="space-y-6 animate-slide-up">
+            <div className="space-y-6">
               <div>
                 <Badge className="mb-4 bg-primary text-primary-foreground">
                   {car.segment.toUpperCase()}
                 </Badge>
-                <h1 className="text-5xl font-bold mb-2 bg-gradient-gold bg-clip-text text-transparent">
+                <h1 className="text-5xl font-bold mb-2 bg-gradient-royal bg-clip-text text-transparent">
                   {car.name}
                 </h1>
                 <p className="text-xl text-muted-foreground">{car.brand}</p>
               </div>
 
               {car.description && (
-                <p className="text-foreground leading-relaxed">{car.description}</p>
+                <p className="text-foreground">{car.description}</p>
               )}
 
               <Card className="bg-secondary border-border">
@@ -141,21 +136,21 @@ export default function CarDetails() {
                       <div className="text-center">
                         <Gauge className="h-8 w-8 text-primary mx-auto mb-2" />
                         <p className="text-2xl font-bold">{car.horsepower}</p>
-                        <p className="text-sm text-muted-foreground">Horsepower</p>
+                        <p className="text-sm text-muted-foreground">HP</p>
                       </div>
                     )}
                     {car.top_speed && (
                       <div className="text-center">
                         <Zap className="h-8 w-8 text-primary mx-auto mb-2" />
                         <p className="text-2xl font-bold">{car.top_speed}</p>
-                        <p className="text-sm text-muted-foreground">Top Speed (mph)</p>
+                        <p className="text-sm text-muted-foreground">mph</p>
                       </div>
                     )}
                     {car.acceleration && (
                       <div className="text-center">
                         <Clock className="h-8 w-8 text-primary mx-auto mb-2" />
                         <p className="text-2xl font-bold">{car.acceleration}</p>
-                        <p className="text-sm text-muted-foreground">0-60 mph</p>
+                        <p className="text-sm text-muted-foreground">0-60</p>
                       </div>
                     )}
                   </div>
@@ -163,83 +158,67 @@ export default function CarDetails() {
               </Card>
 
               <Card className="bg-card border-border">
-                <CardContent className="p-6 space-y-4">
-                  <h3 className="text-lg font-semibold">Select Rental Period</h3>
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Book Your Ride</h3>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "justify-start text-left font-normal",
-                            !startDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {startDate ? format(startDate, "PPP") : "Start Date"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={startDate}
-                          onSelect={setStartDate}
-                          disabled={(date) => date < new Date()}
-                        />
-                      </PopoverContent>
-                    </Popover>
-
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "justify-start text-left font-normal",
-                            !endDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {endDate ? format(endDate, "PPP") : "End Date"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={endDate}
-                          onSelect={setEndDate}
-                          disabled={(date) => !startDate || date <= startDate}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  <div className="pt-4 border-t border-border">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-muted-foreground">Price per day:</span>
-                      <span className="text-xl font-semibold">${car.price_per_day}</span>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="start-date">Start Date</Label>
+                      <Input
+                        id="start-date"
+                        type="date"
+                        value={startDate?.toISOString().split('T')[0] || ''}
+                        onChange={(e) => {
+                          const date = new Date(e.target.value);
+                          setStartDate(date);
+                          if (endDate && date > endDate) {
+                            setEndDate(undefined);
+                          }
+                        }}
+                        min={new Date().toISOString().split('T')[0]}
+                      />
                     </div>
-                    {rentalDays > 0 && (
-                      <>
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-muted-foreground">Rental days:</span>
-                          <span className="text-xl font-semibold">{rentalDays}</span>
-                        </div>
-                        <div className="flex justify-between items-center pt-2 border-t border-border">
-                          <span className="text-lg font-semibold">Total:</span>
-                          <span className="text-3xl font-bold text-primary">${totalPrice}</span>
-                        </div>
-                      </>
-                    )}
+                    <div>
+                      <Label htmlFor="end-date">End Date</Label>
+                      <Input
+                        id="end-date"
+                        type="date"
+                        value={endDate?.toISOString().split('T')[0] || ''}
+                        onChange={(e) => setEndDate(new Date(e.target.value))}
+                        min={startDate?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0]}
+                        disabled={!startDate}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="pickup-location">Pickup Location</Label>
+                      <Input
+                        id="pickup-location"
+                        type="text"
+                        placeholder="Enter pickup location"
+                        value={pickupLocation}
+                        onChange={(e) => setPickupLocation(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="return-time">Return Time</Label>
+                      <Input
+                        id="return-time"
+                        type="time"
+                        value={returnTime}
+                        onChange={(e) => setReturnTime(e.target.value)}
+                      />
+                    </div>
+                    <p className="text-2xl font-bold text-primary">
+                      ₹{(car.price_per_day * rentalDays).toFixed(2)}
+                    </p>
                   </div>
 
                   <Button 
-                    onClick={handleAddToCart}
-                    className="w-full bg-gradient-gold hover:opacity-90 font-semibold"
-                    size="lg"
+                    onClick={() => addToCart.mutate()} 
+                    disabled={!startDate || !endDate || !pickupLocation.trim() || addToCart.isPending}
+                    className="w-full mt-4 bg-gradient-royal hover:opacity-90"
                   >
-                    <ShoppingCart className="mr-2 h-5 w-5" />
-                    Add to Cart
+                    {addToCart.isPending ? "Adding..." : "Add to Cart"}
                   </Button>
                 </CardContent>
               </Card>

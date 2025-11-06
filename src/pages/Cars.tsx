@@ -35,7 +35,7 @@ export default function Cars() {
       <div className="pt-24 pb-16">
         <div className="container mx-auto px-6">
           <div className="text-center mb-12 animate-fade-in">
-            <h1 className="text-5xl font-bold mb-4 bg-gradient-gold bg-clip-text text-transparent">
+            <h1 className="text-5xl font-bold mb-4 bg-gradient-royal bg-clip-text text-transparent">
               Our Exclusive Fleet
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -121,11 +121,11 @@ export default function Cars() {
                     <div className="flex items-center justify-between pt-4 border-t border-border">
                       <div>
                         <span className="text-3xl font-bold text-primary">
-                          ${car.price_per_day}
+                          ₹{car.price_per_day}
                         </span>
                         <span className="text-sm text-muted-foreground">/day</span>
                       </div>
-                      <Button className="bg-gradient-gold hover:opacity-90">
+                      <Button className="bg-gradient-royal hover:opacity-90">
                         View Details
                       </Button>
                     </div>

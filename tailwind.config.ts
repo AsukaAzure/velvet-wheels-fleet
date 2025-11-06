@@ -65,11 +65,11 @@ export default {
       },
       backgroundImage: {
         "gradient-hero": "var(--gradient-hero)",
-        "gradient-gold": "var(--gradient-gold)",
+        "gradient-royal": "var(--gradient-royal)",
         "gradient-card": "var(--gradient-card)",
       },
       boxShadow: {
-        "gold": "var(--shadow-gold)",
+        "royal": "var(--shadow-royal)",
         "luxury": "var(--shadow-luxury)",
       },
       transitionProperty: {

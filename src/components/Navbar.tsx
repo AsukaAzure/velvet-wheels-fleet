@@ -59,8 +59,8 @@ export const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold bg-gradient-gold bg-clip-text text-transparent">
-            LUXE MOTORS
+          <Link to="/" className="text-2xl font-bold bg-gradient-royal bg-clip-text text-transparent">
+            Royal Rides
           </Link>
 
           <div className="flex items-center gap-6">
@@ -72,6 +72,11 @@ export const Navbar = () => {
 
             {user ? (
               <>
+                <Link to="/bookings">
+                  <Button variant="ghost" className="text-foreground hover:text-primary">
+                    My Bookings
+                  </Button>
+                </Link>
                 {isAdmin && (
                   <Link to="/admin">
                     <Button variant="ghost" className="text-foreground hover:text-primary">
@@ -95,7 +100,7 @@ export const Navbar = () => {
               </>
             ) : (
               <Link to="/auth">
-                <Button variant="default" className="bg-gradient-gold hover:opacity-90">
+                <Button variant="default" className="bg-gradient-royal hover:opacity-90">
                   <User className="h-4 w-4 mr-2" />
                   Sign In
                 </Button>
