@@ -242,7 +242,6 @@ export default function Admin() {
               </Card>
             </div>
 
-            <div className="flex justify-between items-center">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button onClick={resetForm} className="bg-gradient-royal hover:opacity-90">
@@ -369,7 +368,6 @@ export default function Admin() {
                 </form>
               </DialogContent>
             </Dialog>
-          </div>
 
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
