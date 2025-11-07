@@ -77,6 +77,12 @@ export default function Cart() {
         order_id: order.id,
         car_id: item.car_id,
         rental_days: item.rental_days,
+        pickup_date: item.pickup_date,
+        pickup_time: item.pickup_time,
+        pickup_location: item.pickup_location,
+        return_date: item.return_date,
+        return_time: item.return_time,
+        return_location: item.return_location,
         start_date: item.start_date,
         end_date: item.end_date,
         price_per_day: item.cars.price_per_day,
@@ -95,12 +101,20 @@ export default function Cart() {
         .eq("user_id", user.id);
 
       if (deleteError) throw deleteError;
+
+      const carIds = cartItems.map(item => item.car_id);
+      const { error: updateError } = await supabase
+        .from("cars")
+        .update({ available: false })
+        .in("id", carIds);
+
+      if (updateError) throw updateError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       queryClient.invalidateQueries({ queryKey: ["cartCount"] });
       toast.success("Order placed successfully!");
-      navigate("/cars");
+      navigate("/bookings");
     },
     onError: () => {
       toast.error("Failed to place order");
@@ -161,28 +175,35 @@ export default function Cart() {
                         <div className="flex-1">
                           <h3 className="text-2xl font-bold mb-1">{item.cars.name}</h3>
                           <p className="text-muted-foreground mb-4">{item.cars.brand}</p>
-                          <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div>
-                              <span className="text-muted-foreground">Start: </span>
-                              <span className="font-semibold">{new Date(item.start_date).toLocaleDateString()}</span>
+                          
+                          <div className="space-y-2">
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">Pickup:</span>
+                                <p className="font-medium">{new Date(item.pickup_date).toLocaleDateString()}</p>
+                                <p>{item.pickup_time} - {item.pickup_location}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Return:</span>
+                                <p className="font-medium">{new Date(item.return_date).toLocaleDateString()}</p>
+                                <p>{item.return_time} - {item.return_location}</p>
+                              </div>
                             </div>
-                            <div>
-                              <span className="text-muted-foreground">End: </span>
-                              <span className="font-semibold">{new Date(item.end_date).toLocaleDateString()}</span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Days: </span>
-                              <span className="font-semibold">{item.rental_days}</span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Price/day: </span>
-                              <span className="font-semibold">${item.cars.price_per_day}</span>
+                            <div className="flex items-center gap-4 text-sm pt-2">
+                              <div>
+                                <span className="text-muted-foreground">Days: </span>
+                                <span className="font-semibold">{item.rental_days}</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Price/day: </span>
+                                <span className="font-semibold">₹{item.cars.price_per_day}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
                         <div className="flex flex-col items-end justify-between">
                           <p className="text-2xl font-bold text-primary">
-                            ${(item.rental_days * Number(item.cars.price_per_day)).toFixed(2)}
+                            ₹{(item.rental_days * Number(item.cars.price_per_day)).toFixed(2)}
                           </p>
                           <Button
                             variant="destructive"
@@ -206,11 +227,11 @@ export default function Cart() {
                   <CardContent className="space-y-4">
                     <div className="flex justify-between text-lg">
                       <span className="text-muted-foreground">Subtotal:</span>
-                      <span className="font-semibold">${totalAmount.toFixed(2)}</span>
+                      <span className="font-semibold">₹{totalAmount.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-lg border-t border-border pt-4">
                       <span className="font-bold">Total:</span>
-                      <span className="text-3xl font-bold text-primary">${totalAmount.toFixed(2)}</span>
+                      <span className="text-3xl font-bold text-primary">₹{totalAmount.toFixed(2)}</span>
                     </div>
                     <Button 
                       onClick={() => checkoutMutation.mutate()}

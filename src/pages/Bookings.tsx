@@ -106,26 +106,29 @@ export default function Bookings() {
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                              <div className="flex items-center gap-2 text-muted-foreground">
-                                <Calendar className="h-4 w-4" />
-                                <span>
-                                  {new Date(item.start_date).toLocaleDateString()} - {new Date(item.end_date).toLocaleDateString()}
-                                </span>
+                              <div className="flex items-start gap-2 text-muted-foreground">
+                                <Calendar className="h-4 w-4 mt-1 flex-shrink-0" />
+                                <div>
+                                  <p className="font-medium text-foreground">
+                                    {new Date(item.pickup_date).toLocaleDateString()} - {new Date(item.return_date).toLocaleDateString()}
+                                  </p>
+                                  <p>{item.pickup_time} to {item.return_time}</p>
+                                </div>
                               </div>
                               
-                              <div className="flex items-center gap-2 text-muted-foreground">
-                                <MapPin className="h-4 w-4" />
-                                <span>{item.pickup_location || "Location not specified"}</span>
+                              <div className="flex items-start gap-2 text-muted-foreground">
+                                <MapPin className="h-4 w-4 mt-1 flex-shrink-0" />
+                                <div>
+                                  <p><span className="font-medium text-foreground">Pickup:</span> {item.pickup_location || "Not specified"}</p>
+                                  <p><span className="font-medium text-foreground">Return:</span> {item.return_location || "Not specified"}</p>
+                                </div>
                               </div>
                               
                               <div className="flex items-center gap-2 text-muted-foreground">
                                 <Clock className="h-4 w-4" />
-                                <span>Return time: {item.return_time || "10:00"}</span>
-                              </div>
-                              
-                              <div>
-                                <span className="text-muted-foreground">Duration: </span>
-                                <span className="font-medium">{item.rental_days} days</span>
+                                <span>
+                                  <span className="font-medium text-foreground">Duration:</span> {item.rental_days} {item.rental_days === 1 ? 'day' : 'days'}
+                                </span>
                               </div>
                             </div>
                             

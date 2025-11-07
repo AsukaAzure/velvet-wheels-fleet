@@ -18,10 +18,12 @@ export default function CarDetails() {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [rentalDays, setRentalDays] = useState(1);
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
+  const [pickupDate, setPickupDate] = useState<Date>();
+  const [pickupTime, setPickupTime] = useState("10:00");
   const [pickupLocation, setPickupLocation] = useState("");
+  const [returnDate, setReturnDate] = useState<Date>();
   const [returnTime, setReturnTime] = useState("10:00");
+  const [returnLocation, setReturnLocation] = useState("");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -30,11 +32,11 @@ export default function CarDetails() {
   }, []);
 
   useEffect(() => {
-    if (startDate && endDate) {
-      const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    if (pickupDate && returnDate) {
+      const days = Math.ceil((returnDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24));
       setRentalDays(days > 0 ? days : 1);
     }
-  }, [startDate, endDate]);
+  }, [pickupDate, returnDate]);
 
   const { data: car, isLoading } = useQuery({
     queryKey: ["car", id],
@@ -56,22 +58,26 @@ export default function CarDetails() {
         return;
       }
 
-      if (!startDate || !endDate) {
-        throw new Error("Please select rental dates");
+      if (!pickupDate || !returnDate) {
+        throw new Error("Please select pickup and return dates");
       }
 
-      if (!pickupLocation.trim()) {
-        throw new Error("Please enter pickup location");
+      if (!pickupLocation.trim() || !returnLocation.trim()) {
+        throw new Error("Please enter pickup and return locations");
       }
 
       const { error } = await supabase.from("cart_items").insert({
         user_id: user.id,
         car_id: id,
         rental_days: rentalDays,
-        start_date: startDate.toISOString().split('T')[0],
-        end_date: endDate.toISOString().split('T')[0],
+        pickup_date: pickupDate.toISOString().split('T')[0],
+        pickup_time: pickupTime,
         pickup_location: pickupLocation,
+        return_date: returnDate.toISOString().split('T')[0],
         return_time: returnTime,
+        return_location: returnLocation,
+        start_date: pickupDate.toISOString().split('T')[0],
+        end_date: returnDate.toISOString().split('T')[0],
       });
 
       if (error) throw error;
@@ -162,35 +168,36 @@ export default function CarDetails() {
                   <h3 className="text-lg font-semibold mb-4">Book Your Ride</h3>
                   
                   <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="start-date">Start Date</Label>
-                      <Input
-                        id="start-date"
-                        type="date"
-                        value={startDate?.toISOString().split('T')[0] || ''}
-                        onChange={(e) => {
-                          const date = new Date(e.target.value);
-                          setStartDate(date);
-                          if (endDate && date > endDate) {
-                            setEndDate(undefined);
-                          }
-                        }}
-                        min={new Date().toISOString().split('T')[0]}
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="pickup-date">Pickup Date *</Label>
+                        <Input
+                          id="pickup-date"
+                          type="date"
+                          value={pickupDate?.toISOString().split('T')[0] || ''}
+                          onChange={(e) => {
+                            const date = new Date(e.target.value);
+                            setPickupDate(date);
+                            if (returnDate && date > returnDate) {
+                              setReturnDate(undefined);
+                            }
+                          }}
+                          min={new Date().toISOString().split('T')[0]}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="pickup-time">Pickup Time *</Label>
+                        <Input
+                          id="pickup-time"
+                          type="time"
+                          value={pickupTime}
+                          onChange={(e) => setPickupTime(e.target.value)}
+                        />
+                      </div>
                     </div>
+                    
                     <div>
-                      <Label htmlFor="end-date">End Date</Label>
-                      <Input
-                        id="end-date"
-                        type="date"
-                        value={endDate?.toISOString().split('T')[0] || ''}
-                        onChange={(e) => setEndDate(new Date(e.target.value))}
-                        min={startDate?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0]}
-                        disabled={!startDate}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="pickup-location">Pickup Location</Label>
+                      <Label htmlFor="pickup-location">Pickup Location *</Label>
                       <Input
                         id="pickup-location"
                         type="text"
@@ -199,23 +206,58 @@ export default function CarDetails() {
                         onChange={(e) => setPickupLocation(e.target.value)}
                       />
                     </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="return-date">Return Date *</Label>
+                        <Input
+                          id="return-date"
+                          type="date"
+                          value={returnDate?.toISOString().split('T')[0] || ''}
+                          onChange={(e) => setReturnDate(new Date(e.target.value))}
+                          min={pickupDate?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0]}
+                          disabled={!pickupDate}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="return-time">Return Time *</Label>
+                        <Input
+                          id="return-time"
+                          type="time"
+                          value={returnTime}
+                          onChange={(e) => setReturnTime(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
                     <div>
-                      <Label htmlFor="return-time">Return Time</Label>
+                      <Label htmlFor="return-location">Return Location *</Label>
                       <Input
-                        id="return-time"
-                        type="time"
-                        value={returnTime}
-                        onChange={(e) => setReturnTime(e.target.value)}
+                        id="return-location"
+                        type="text"
+                        placeholder="Enter return location"
+                        value={returnLocation}
+                        onChange={(e) => setReturnLocation(e.target.value)}
                       />
                     </div>
-                    <p className="text-2xl font-bold text-primary">
-                      ₹{(car.price_per_day * rentalDays).toFixed(2)}
-                    </p>
+                    
+                    <div className="pt-4 border-t border-border">
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Rental Days:</span>
+                        <span className="font-semibold">{rentalDays} {rentalDays === 1 ? 'day' : 'days'}</span>
+                      </div>
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-lg">Total:</span>
+                        <p className="text-3xl font-bold text-primary">
+                          ₹{(car.price_per_day * rentalDays).toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
                   <Button 
                     onClick={() => addToCart.mutate()} 
-                    disabled={!startDate || !endDate || !pickupLocation.trim() || addToCart.isPending}
+                    disabled={!pickupDate || !returnDate || !pickupLocation.trim() || !returnLocation.trim() || addToCart.isPending}
                     className="w-full mt-4 bg-gradient-royal hover:opacity-90"
                   >
                     {addToCart.isPending ? "Adding..." : "Add to Cart"}

@@ -99,6 +99,29 @@ export default function Admin() {
     enabled: isAdmin,
   });
 
+  const { data: orders } = useQuery({
+    queryKey: ["adminOrders"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select(`
+          *,
+          order_items (
+            *,
+            cars (*)
+          ),
+          profiles (
+            email,
+            full_name
+          )
+        `)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: isAdmin,
+  });
+
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
       try {
@@ -205,9 +228,11 @@ export default function Admin() {
       <div className="pt-24 pb-16">
         <div className="container mx-auto px-6">
           <div className="mb-8">
-            <h1 className="text-5xl font-bold bg-gradient-royal bg-clip-text text-transparent mb-8">
+            <h1 className="text-5xl font-bold bg-gradient-royal bg-clip-text text-transparent mb-4">
               Admin Dashboard
             </h1>
+            
+            <h2 className="text-2xl font-semibold mb-4">Car Management</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <Card className="bg-card border-border">
@@ -368,6 +393,7 @@ export default function Admin() {
                 </form>
               </DialogContent>
             </Dialog>
+          </div>
 
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
@@ -419,6 +445,66 @@ export default function Admin() {
               ))}
             </div>
           )}
+
+          <div className="mt-12">
+            <h2 className="text-2xl font-semibold mb-6">All Orders</h2>
+            {!orders || orders.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">No orders yet</p>
+            ) : (
+              <div className="space-y-4">
+                {orders.map((order: any) => (
+                  <Card key={order.id} className="bg-card border-border">
+                    <CardHeader>
+                      <CardTitle className="flex justify-between items-start">
+                        <div>
+                          <p className="text-lg">Order #{order.id.slice(0, 8)}</p>
+                          <p className="text-sm text-muted-foreground font-normal">
+                            {order.profiles?.email || "Unknown user"}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-primary">₹{order.total_amount}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(order.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {order.order_items?.map((item: any) => (
+                          <div key={item.id} className="border-t pt-3 first:border-t-0 first:pt-0">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <p className="font-medium">{item.cars.name}</p>
+                                <p className="text-sm text-muted-foreground">{item.cars.brand}</p>
+                              </div>
+                              <p className="font-semibold">₹{item.subtotal}</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">Pickup:</span>
+                                <p>{new Date(item.pickup_date).toLocaleDateString()} at {item.pickup_time}</p>
+                                <p>{item.pickup_location}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Return:</span>
+                                <p>{new Date(item.return_date).toLocaleDateString()} at {item.return_time}</p>
+                                <p>{item.return_location}</p>
+                              </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {item.rental_days} days @ ₹{item.price_per_day}/day
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
