@@ -113,6 +113,7 @@ export default function Cart() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       queryClient.invalidateQueries({ queryKey: ["cartCount"] });
+      queryClient.invalidateQueries({ queryKey: ["cars"] });
       toast.success("Order placed successfully!");
       navigate("/bookings");
     },
