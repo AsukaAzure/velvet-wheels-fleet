@@ -102,13 +102,7 @@ export default function Cart() {
 
       if (deleteError) throw deleteError;
 
-      const carIds = cartItems.map(item => item.car_id);
-      const { error: updateError } = await supabase
-        .from("cars")
-        .update({ available: false })
-        .in("id", carIds);
-
-      if (updateError) throw updateError;
+      // Car availability is automatically updated by database trigger
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
