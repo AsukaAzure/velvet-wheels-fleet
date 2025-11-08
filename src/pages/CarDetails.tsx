@@ -17,6 +17,7 @@ export default function CarDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [rentalDays, setRentalDays] = useState(1);
   const [pickupDate, setPickupDate] = useState<Date>();
   const [pickupTime, setPickupTime] = useState("10:00");
@@ -28,6 +29,19 @@ export default function CarDetails() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        // Check if user is admin
+        supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .eq("role", "admin")
+          .maybeSingle()
+          .then(({ data }) => {
+            setIsAdmin(!!data);
+          });
+      }
     });
   }, []);
 
@@ -167,6 +181,13 @@ export default function CarDetails() {
                 <CardContent className="p-6">
                   <h3 className="text-lg font-semibold mb-4">Book Your Ride</h3>
                   
+                  {isAdmin ? (
+                    <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-md text-center">
+                      <p className="text-destructive font-medium">
+                        Administrators cannot book vehicles. Please use a customer account to make bookings.
+                      </p>
+                    </div>
+                  ) : (
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -253,15 +274,16 @@ export default function CarDetails() {
                         </p>
                       </div>
                     </div>
-                  </div>
 
-                  <Button 
-                    onClick={() => addToCart.mutate()} 
-                    disabled={!pickupDate || !returnDate || !pickupLocation.trim() || !returnLocation.trim() || addToCart.isPending}
-                    className="w-full mt-4 bg-gradient-royal hover:opacity-90"
-                  >
-                    {addToCart.isPending ? "Adding..." : "Add to Cart"}
-                  </Button>
+                    <Button 
+                      onClick={() => addToCart.mutate()} 
+                      disabled={!pickupDate || !returnDate || !pickupLocation.trim() || !returnLocation.trim() || addToCart.isPending}
+                      className="w-full mt-4 bg-gradient-royal hover:opacity-90"
+                    >
+                      {addToCart.isPending ? "Adding..." : "Add to Cart"}
+                    </Button>
+                  </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
